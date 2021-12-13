@@ -3,8 +3,9 @@ const wrapper = document.querySelector(".wrapper"),
 	volume = wrapper.querySelector(".word i"),
 	infoText = wrapper.querySelector(".info-text"),
 	synonyms = wrapper.querySelector(".synonyms .list"),
+	antonyms = wrapper.querySelector(".antonyms .list"),
 	removeIcon = wrapper.querySelector(".search span");
-let audio;
+let audio, origin;
 
 function data(result, word) {
 	if (result.title) {
@@ -13,6 +14,7 @@ function data(result, word) {
 		wrapper.classList.add("active");
 		let definitions = result[0].meanings[0].definitions[0],
 			phontetics = `${result[0].meanings[0].partOfSpeech}  /${result[0].phonetics[0].text}/`;
+
 		document.querySelector(".word p").innerText = result[0].word;
 		document.querySelector(".word span").innerText = phontetics;
 		document.querySelector(".meaning span").innerText =
@@ -20,23 +22,47 @@ function data(result, word) {
 		document.querySelector(".example span").innerText = definitions.example;
 		audio = new Audio("https:" + result[0].phonetics[0].audio);
 
+		origin = document.querySelector(".origin span").innerText =
+			result[0].origin;
+		if (origin === undefined) {
+			document.querySelector(".origin").style.display = "none";
+		}
+
 		if (definitions.synonyms[0] == undefined) {
 			synonyms.parentElement.style.display = "none";
 		} else {
 			synonyms.parentElement.style.display = "block";
 			synonyms.innerHTML = "";
-			for (let i = 0; i < 5; i++) {
+
+			for (let i = 0; i < 4; i++) {
+				if (definitions.synonyms[i] == undefined) break;
+
 				let tag = `<span onclick="search('${definitions.synonyms[i]}')">${definitions.synonyms[i]},</span>`;
 				tag =
-					i == 4
-						? (tag = `<span onclick="search('${definitions.synonyms[i]}')">${definitions.synonyms[4]}</span>`)
+					i == 3
+						? (tag = `<span onclick="search('${definitions.synonyms[i]}')">${definitions.synonyms[2]}</span>`)
 						: tag;
 				synonyms.insertAdjacentHTML("beforeend", tag);
 			}
 		}
+
+		if (definitions.antonyms[0] == undefined) {
+			antonyms.parentElement.style.display = "none";
+		} else {
+			antonyms.parentElement.style.display = "block";
+			antonyms.innerHTML = "";
+			for (let i = 0; i < 5; i++) {
+				if (definitions.antonyms[i] == undefined) break;
+				let tag = `<span onclick="search('${definitions.antonyms[i]}')">${definitions.antonyms[i]},</span>`;
+				tag =
+					i == 4
+						? (tag = `<span onclick="search('${definitions.antonyms[i]}')">${definitions.antonyms[4]}</span>`)
+						: tag;
+				antonyms.insertAdjacentHTML("beforeend", tag);
+			}
+		}
 	}
 }
-
 function search(word) {
 	fetchApi(word);
 	searchInput.value = word;
@@ -46,6 +72,7 @@ function fetchApi(word) {
 	wrapper.classList.remove("active");
 	infoText.style.color = "#000";
 	infoText.innerHTML = `Searching the meaning of <span>"${word}"</span>`;
+	// https://dictionaryapi.dev/ read docs for more info
 	let url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
 	fetch(url)
 		.then((response) => response.json())
